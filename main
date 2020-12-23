@@ -24,6 +24,7 @@ tk.update()
 # Описываем класс Ball
 class Ball:
     """Отвечает за шарик: задание начального положения и направления движения, касания платформы, само-отрисовка"""
+
     # Конструктор
     def __init__(self, canvas, paddle, score, color):
         # Задаём параметры объекта
@@ -87,3 +88,62 @@ class Ball:
         if pos[2] >= self.canvas_width:
             # Движем его влево
             self.x = -2
+
+
+#  Описываем класс Paddle (отрисовка платформы)
+class Paddle:
+    # конструктор
+    def __init__(self, canvas, color):
+        # Платформа рисуется на том же самом холсте
+        self.canvas = canvas
+        # Создаем платформу и получаем её внутреннее имя
+        self.id = canvas.create_rectangle(0, 0, 100, 10, fill=color)
+        # Все возможные стартовые положения платформы
+        start_1 = [40, 60, 90, 120, 150, 180, 200]
+        # Случайная стартовая точка для платформы
+        self.starting_point_x = random.choice(start_1)
+        # Ставим платформу на старт
+        self.canvas.move(self.id, self.starting_point_x, 300)
+        # Платформа стоит
+        self.x = 0
+        # Узнаём ширину
+        self.canvas_width = self.canvas.winfo_width()
+        # Обработчик нажатий:
+        # Метод turn_right() если нажата стрелка вправо
+        self.canvas.bind_all('<KeyPress-Right>', self.turn_right)
+        # Метод turn_left() если стрелка влево
+        self.canvas.bind_all('<KeyPress-Left>', self.turn_left)
+        # Ожидание начала игры
+        self.started = False
+        # Запускаем игру, как только нажат энтер
+        self.canvas.bind_all('<KeyPress-Return>', self.start_game)
+
+    # Движение вправо
+    def turn_right(self, event):
+        # Минимальное смещение, на 1 пиксель по оси x
+        self.x = 1
+
+    # Движение влево
+    def turn_left(self, event):
+        # Минимальное смещение, на 1 пиксель по оси x
+        self.x = -1
+
+    # Начало игры
+    def start_game(self, event):
+        # Запуск
+        self.started = True
+
+    # Движение платформы
+    def draw(self):
+        # Сдвигаем платформу на заданное количество пикселей (1 пиксель)
+        self.canvas.move(self.id, self.x, 0)
+        # Координаты холста
+        pos = self.canvas.coords(self.id)
+        # Что-бы не врезаться в границу (в левую)
+        if pos[0] <= 0:
+            # Остановка (не выезжаем за край)
+            self.x = 0
+        # Что-бы не врезаться в границы (в правую)
+        elif pos[2] >= self.canvas_width:
+            # Остановка (не выезжаем за край)
+            self.x = 0
