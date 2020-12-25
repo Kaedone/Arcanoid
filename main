@@ -5,9 +5,8 @@ import time
 import random
 
 # Создаём новый объект — окно с игровым полем.
-# В нашем случае переменная окна называется tk, и мы его сделали из класса Tk() — он есть в графической библиотеке
 tk = Tk()
-# Делаем заголовок окна — Games с помощью свойства объекта title
+# Делаем заголовок окна — Games (с помощью свойства объекта title)
 tk.title('Arcanoid')
 # Запрещаем менять размеры окна
 tk.resizable(0, 0)
@@ -21,22 +20,25 @@ canvas.pack()
 tk.update()
 
 
-# Описываем класс Ball
+# Описание класса Ball
 class Ball:
     """Отвечает за шарик: задание начального положения и направления движения, касания платформы, само-отрисовка"""
 
     # Конструктор
-    def __init__(self, canvas, paddle, score, color):
+    def __init__(self, game_field, paddle, score, color):
         # Задаём параметры объекта
-        self.canvas = canvas
+        self.canvas = game_field
         self.paddle = paddle
         self.score = score
 
-        self.id = canvas.create_oval(10, 10, 25, 25, fill=color)
+        self.id = game_field.create_oval(10, 10, 25, 25, fill=color)
         # Помещаем шарик в "стартовое" положение (245,100)
         self.canvas.move(self.id, 245, 100)
-        # Выбираем ветор движения
-        self.x = random.randint(-2, 2)
+        # Все возможные для старта направления
+        starts = [-2, -1, 1, 2]
+        # Перемешиваем и выбираем 1 из предложенных, будующий вектор движения
+        random.shuffle(starts)
+        self.x = starts[0]
         # Вначале он всегда падает
         self.y = -2
         # Определяем высоту и ширину
@@ -90,14 +92,14 @@ class Ball:
             self.x = -2
 
 
-#  Описываем класс Paddle (отрисовка платформы)
+#  Описание класса Paddle (отрисовка платформы)
 class Paddle:
-    # конструктор
-    def __init__(self, canvas, color):
+    # Конструктор
+    def __init__(self, game_field, color):
         # Платформа рисуется на том же самом холсте
-        self.canvas = canvas
+        self.canvas = game_field
         # Создаем платформу и получаем её внутреннее имя
-        self.id = canvas.create_rectangle(0, 0, 100, 10, fill=color)
+        self.id = game_field.create_rectangle(0, 0, 100, 10, fill=color)
         # Все возможные стартовые положения платформы
         start_1 = [40, 60, 90, 120, 150, 180, 200]
         # Случайная стартовая точка для платформы
@@ -121,12 +123,12 @@ class Paddle:
     # Движение вправо
     def turn_right(self, event):
         # Минимальное смещение, на 1 пиксель по оси x
-        self.x = 1
+        self.x = 5
 
     # Движение влево
     def turn_left(self, event):
         # Минимальное смещение, на 1 пиксель по оси x
-        self.x = -1
+        self.x = -5
 
     # Начало игры
     def start_game(self, event):
@@ -147,3 +149,49 @@ class Paddle:
         elif pos[2] >= self.canvas_width:
             # Остановка (не выезжаем за край)
             self.x = 0
+
+
+#  Описание класса Score (Отображение и работа счётчика)
+class Score:
+    # Конструктор
+    def __init__(self, game_field, color):
+        # Изначальное значение счетчика (0)
+        self.score = 0
+        # Использование ужего соданного холста
+        self.canvas = game_field
+        # Создаём надпись, которая показывает текущий счёт, делаем её нужно цвета
+        # и запоминаем её внутреннее имя
+        self.id = game_field.create_text(450, 10, text=self.score, font=('Times New Roman', 15), fill=color)
+
+    # Обработка касаний платформы
+    def hit(self):
+        # Увелечение счета
+        self.score += 1
+        # Обновление счета
+        self.canvas.itemconfig(self.id, text=self.score)
+
+
+# Создание объекта — зелёный счёт
+score = Score(canvas, 'green')
+# Создание платформы
+paddle = Paddle(canvas, 'White')
+# Создание шарика
+ball = Ball(canvas, paddle, score, 'red')
+# Ждём, пока шарик не вывалится
+while not ball.hit_bottom:
+    # Когда игра началась, разрешаем платформе начать передвижение
+    if paddle.started:
+        # Двигаем шарик
+        ball.draw()
+        # Двигаем платформу
+        paddle.draw()
+    # Обновляем игровое поле, для отрисовки
+    tk.update_idletasks()
+    # Обновляем ещё раз
+    tk.update()
+    # Делаем микро паузу, для плавности
+    time.sleep(0.01)
+# Если программа дошла досюда то, значит что шарик коснулся дна.
+# Ждём 3 секунды, что-бы игрок прочитал финальную надпись, и завершаем игру
+time.sleep(3)
+
